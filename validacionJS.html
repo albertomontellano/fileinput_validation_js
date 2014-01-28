@@ -1,0 +1,134 @@
+<html>
+<body>
+
+	<input name="files" type="file" id="uploadFile"  multiple />
+    <input type="button" value="Upload File" onclick="validateFiles();" />
+
+<script type="text/javascript">
+
+function validateFiles(){	
+	
+function imageProcessing(fileToBeProcessed,callback) {
+	imageValidation(fileToBeProcessed, function(validationResponse) {
+		var response = validationResponse;
+		callback(response);
+	});
+}
+
+function imageValidation(fileToBeProcessed,callback) {
+	var response = {};
+	var img = new Image();
+	try 
+	{
+	img.onload = function() {
+		var x = img.width ;
+		var y = img.height ;
+		var isSizeCorrect = true;
+		var isFormatCorrect = true;
+		var isDimensionCorrect = true;
+		var isInvalid = false;
+		
+		//validation of size, max size = 6 KB
+		if(fileToBeProcessed.size > 6*1024){
+				isSizeCorrect = false;
+				isInvalid = true;
+			}
+		
+		//validation of format, png is only allowed format type
+		
+		if(fileToBeProcessed.type != "image/png"){
+				isFormatCorrect = false;
+				isInvalid = true;
+		   }
+		//validation of dimensions, height and width 60 x 60 px.
+		
+		if ((x !== 60) || (y !== 60)){
+		
+			isDimensionCorrect = false;
+			isInvalid = true;
+		  }
+		
+		response = {filename: fileToBeProcessed.name, sizeResult: isSizeCorrect, formatResult: isFormatCorrect, dimensionResult:isDimensionCorrect, isInvalidImage: isInvalid };
+		
+		if(callback) callback(response);
+	}
+	img.onerror = function() { alert("Incorrect file.");
+	}
+	
+	img.src = window.URL.createObjectURL(fileToBeProcessed);
+	}catch(error){
+			alert(error.message);
+		}
+}
+
+
+var arrayStore = []; //array to store the responses
+ 
+// callback fn that is to be called after
+// each function call is successful
+var callback = function(index, arraySize, response){
+//arrayStore[index] = response;
+arrayStore.push(response);
+//alert(arraySize);
+//alert(arrayStore.length);
+if (arrayStore.length == arraySize)
+		{
+		var msg = "The following file(s) had problems when processing: " + "\r\n" + "\r\n" ;
+		var errorFlag = false;
+		for (var e in arrayStore)
+		{
+		//alert( arrayStore[e].filename + arrayStore[e].isInvalidImage );
+		if (arrayStore[e].isInvalidImage)
+		{
+		    errorFlag = true;
+			if (arrayStore[e].sizeResult == false)
+			{
+			  msg = msg + " " + arrayStore[e].filename + " : Please, check the file size. Max size allowed is 6 KB." + "\r\n" ;
+			}
+			if (arrayStore[e].formatResult == false)
+			{
+			  msg = msg + " " + arrayStore[e].filename + " : Please, check the file format. Only type allowed is png." + "\r\n"  ;
+			}
+			if (arrayStore[e].dimensionResult == false)
+			{
+			
+			  msg = msg + " " + arrayStore[e].filename + " : Please, check the file dimensions. Only images 60 x 60 px. are allowed." + "\r\n" ;
+			}
+
+		}
+		
+		}
+		
+		if (!errorFlag)
+		{
+		msg = "All files are correct!";
+		}
+		
+		alert(msg); //final message alert showing the results of validation
+		}
+};
+ 
+var position = 0;
+var files = document.getElementById("uploadFile").files;
+var filesNumber = files.length;
+//alert(filesNumber);
+
+try {
+while(position < filesNumber){
+//wrapping my callback fn in an anonymous immediate fn
+//to create closure for my incrementing variable position
+		imageProcessing(files[position],(function(pos, arraySize){
+		return function(response){
+		callback(pos, arraySize, response);
+		};
+		})(position, filesNumber ));
+		position++;
+}
+} catch(error){
+			alert(error.message);
+		}
+
+		}
+</script>
+</body>
+</html>
